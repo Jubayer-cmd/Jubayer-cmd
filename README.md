@@ -14,15 +14,6 @@ I'm a full-stack engineer with four years of shipping complete products: the scr
 | [**Pdf-RAG-langchain**](https://github.com/Jubayer-cmd/Pdf-RAG-langchain) | Upload a PDF and ask questions about it. Answers come from vector search over the document and stream in token by token. | FastAPI, LangChain, Gemini |
 | [**Star-Collector**](https://github.com/Jubayer-cmd/Star-Collector) <br><sub>[play](https://star-collector-topaz.vercel.app/)</sub> | Browser arcade game: collect stars, dodge bombs, beat your best score. | Phaser, React, TypeScript |
 
-### Stack
-
-| Area | Tools |
-| --- | --- |
-| **Frontend** | React · Next.js · React Native · Tailwind CSS · React Flow |
-| **Backend** | TypeScript · Node.js · NestJS · Express · Python · FastAPI · gRPC · WebSockets |
-| **Data & infra** | PostgreSQL · MongoDB · Redis · BullMQ · Docker · AWS · OpenTelemetry |
-| **AI** | LangGraph · LangChain · LangSmith · MCP · RAG · evals |
-
 ### Contact
 
 Open to remote Full-Stack and AI Engineer roles.
