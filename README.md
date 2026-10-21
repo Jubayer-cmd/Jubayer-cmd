@@ -16,7 +16,7 @@ I build AI products end to end, from the real-time voice pipeline to the dashboa
 
 ### Stack
 
-| | |
+| Area | Tools |
 | --- | --- |
 | **AI & LLM** | LangGraph · LangChain · LangSmith · MCP · RAG · evals |
 | **Backend** | TypeScript · Node.js · NestJS · Express · Python · FastAPI · gRPC · WebSockets |
