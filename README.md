@@ -5,17 +5,6 @@
 
 I'm a full-stack engineer with four years of shipping complete products: the screens people use, the APIs and databases behind them, the pipelines that deploy them, and lately the AI inside them. I've also led a 12-engineer team, so I care as much about code others can build on as about code that works.
 
-### Problems I've solved
-
-- **Replaced a tangled monolith** with a layered, tested service that became the production runtime.
-- **Let non-developers build their own call flows** with a drag-and-drop builder that compiles to running code, plus a chat assistant that edits the flow for them.
-- **Dropped a paid auth vendor** by building OAuth (PKCE) in-house.
-- **Cut time to first response by 40%** by fetching data in parallel instead of in sequence.
-- **Made releases testable before they ship**: simulated users run through the product and an automated judge scores every run.
-- **Moved a marketing site off WordPress** to Astro for faster pages.
-- **Moved a 12-engineer team to CI/CD** and Docker-based deployments.
-- **Ran a 2008 phone game in today's browsers** by compiling its original Java to JavaScript.
-
 ### Side projects
 
 | Project | What it does | Built with |
