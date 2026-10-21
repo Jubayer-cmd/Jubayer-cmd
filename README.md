@@ -1,9 +1,9 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/header-dark.svg">
-  <img alt="Sheikh Abu Jubayer, Full-Stack & AI Engineer. A map of my work from 2022 to now: at Grit, interface, backend and data for the Unive platform; at Antopolis, CI/CD and Docker, APIs for CRM, e-commerce and CMS products, and leading 12 engineers; at Verbacall, team planning, a no-code flow builder, NestJS and gRPC services, Postgres and Redis, OpenTelemetry on AWS, and AI agents." src="assets/header-light.svg" width="100%">
+  <img alt="Sheikh Abu Jubayer, Full-Stack & AI Engineer. The stack I work across, drawn as a system: interface (React, Next.js, React Native), backend (TypeScript, NestJS, Python, FastAPI), data (PostgreSQL, MongoDB, Redis) and AI (LangGraph, LangChain, MCP, RAG), running on Docker, AWS and CI/CD." src="assets/header-light.svg" width="100%">
 </picture>
 
-I'm a full-stack engineer with four years of shipping complete products: the screens people use, the APIs and databases behind them, the pipelines that deploy them, and lately the AI inside them. I built an education platform at Grit, led a 12-engineer team that shipped 15+ products at Antopolis, and I'm now the largest code contributor at [Verbacall](https://verbacall.com).
+I'm a full-stack engineer with four years of shipping complete products: the screens people use, the APIs and databases behind them, the pipelines that deploy them, and lately the AI inside them. I've also led a 12-engineer team, so I care as much about code others can build on as about code that works.
 
 ### Problems I've solved
 
