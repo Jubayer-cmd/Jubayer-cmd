@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bug Hunt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #15171c; --graphite: #5e6370; --hairline: #dde0e5; --teal: #0a6b66; --bg: #ffffff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink: #e6e8eb; --graphite: #9aa1ad; --hairline: #30363d; --teal: #3fb8ad; --bg: #0d1117; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 'IBM Plex Mono', ui-monospace, monospace; }
+  main { max-width: 932px; margin: 0 auto; padding: 32px 16px 48px; }
+  h1 { font: 700 40px/1.1 'Bricolage Grotesque', sans-serif; margin: 0 0 4px; }
+  p { color: var(--graphite); margin: 0 0 20px; }
+  canvas { display: block; width: 100%; border: 1px solid var(--hairline); border-radius: 12px; touch-action: none; }
+  a { color: var(--teal); }
+  a:focus-visible, canvas:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
+  .keys { margin-top: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Bug hunt</h1>
+  <p>Fix every bug before it reaches production.</p>
+  <canvas id="game" tabindex="0" aria-label="Bug hunt game. Arrow keys move, Space shoots."></canvas>
+  <p class="keys">← → or A D to move · Space to shoot · on a phone, drag to move and the ship fires by itself.<br>
+    <a href="https://github.com/Jubayer-cmd">Back to my GitHub profile</a></p>
+</main>
+<script>
+(() => {
+  const W = 900, H = 560, P = 4;
+  const BUG = [
+    ["..X.....X..", "...X...X...", "..XXXXXXX..", ".XX.XXX.XX.", "XXXXXXXXXXX", "X.XXXXXXX.X", "X.X.....X.X", "...XX.XX..."],
+    ["..X.....X..", "X..X...X..X", "X.XXXXXXX.X", "XXX.XXX.XXX", "XXXXXXXXXXX", ".XXXXXXXXX.", "..X.....X..", ".X.......X."],
+  ];
+  const SHIP = [".....X.....", "....XXX....", "....XXX....", ".XXXXXXXXX.", "XXXXXXXXXXX", "XXXXXXXXXXX"];
+  const NAMES = ["null", "N+1", "CORS", "leak", "500", "timeout", "race", "deadlock", "OOM", "flaky", "typo", "off-by-1",
+                 "XSS", "stale", "404", "NaN", "lag", "drift", "panic", "cache"];
+
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  let colors = {};
+  const readColors = () => {
+    const s = getComputedStyle(document.documentElement);
+    for (const k of ["ink", "graphite", "hairline", "teal", "bg"]) colors[k] = s.getPropertyValue("--" + k).trim();
+  };
+  readColors();
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", readColors);
+
+  const fit = () => {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  fit();
+  canvas.style.aspectRatio = `${W} / ${H}`;
+
+  let best = 0;
+  try { best = +localStorage.getItem("bughunt-best") || 0; } catch {}
+
+  const stars = Array.from({ length: 70 }, () => ({ x: Math.random() * W, y: Math.random() * H, s: Math.random() * 0.6 + 0.2 }));
+  let state, ship, shots, bombs, bugs, sparks, dir, speed, wave, score, lives, frame, cooldown, bombTimer;
+
+  function newWave() {
+    bugs = [];
+    const rows = Math.min(3 + Math.floor(wave / 2), 5), cols = 8;
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++)
+      bugs.push({ x: 120 + c * 86, y: 70 + r * 62, name: NAMES[(r * cols + c + wave * 3) % NAMES.length] });
+    dir = 1; speed = 0.35 + wave * 0.12; bombTimer = 60;
+  }
+  function reset() {
+    ship = { x: W / 2, alive: true, hurt: 0 };
+    shots = []; bombs = []; sparks = [];
+    wave = 0; score = 0; lives = 3; frame = 0; cooldown = 0;
+    newWave();
+  }
+  reset();
+  state = "title";
+
+  const keys = {};
+  let fireQueued = false;  // a tap can start and end between two frames
+  addEventListener("keydown", e => {
+    if (["ArrowLeft", "ArrowRight", " ", "Enter"].includes(e.key) && document.activeElement === canvas) e.preventDefault();
+    keys[e.key.toLowerCase()] = true;
+    if (e.key === " " && state === "play") fireQueued = true;
+    if ((e.key === " " || e.key === "Enter") && state !== "play" && document.activeElement === canvas) start();
+  });
+  addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
+
+  let touchX = null;
+  const toGame = e => {
+    const r = canvas.getBoundingClientRect();
+    return (e.clientX - r.left) / r.width * W;
+  };
+  canvas.addEventListener("pointerdown", e => {
+    canvas.focus();
+    if (state !== "play") { start(); return; }
+    if (e.pointerType !== "mouse") touchX = toGame(e);
+  });
+  canvas.addEventListener("pointermove", e => { if (touchX !== null) touchX = toGame(e); });
+  addEventListener("pointerup", () => { touchX = null; });
+
+  function start() { reset(); state = "play"; }
+
+  function sprite(pattern, x, y, color) {
+    ctx.fillStyle = color;
+    pattern.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === "X") ctx.fillRect(x + c * P, y + r * P, P, P); }));
+  }
+  function burst(x, y, color) {
+    for (let i = 0; i < 14; i++) {
+      const a = Math.random() * Math.PI * 2, v = Math.random() * 3 + 1;
+      sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 30, color });
+    }
+  }
+
+  function update() {
+    frame++;
+    for (const s of stars) { s.y += s.s; if (s.y > H) { s.y = 0; s.x = Math.random() * W; } }
+    sparks = sparks.filter(p => (p.x += p.vx, p.y += p.vy, p.vx *= 0.94, p.vy *= 0.94, --p.life > 0));
+    if (state !== "play") return;
+
+    // ship
+    const left = keys["arrowleft"] || keys["a"], right = keys["arrowright"] || keys["d"];
+    if (left) ship.x -= 6;
+    if (right) ship.x += 6;
+    if (touchX !== null) ship.x += Math.max(-7, Math.min(7, touchX - ship.x));
+    ship.x = Math.max(30, Math.min(W - 30, ship.x));
+    if (ship.hurt) ship.hurt--;
+    cooldown && cooldown--;
+    const firing = keys[" "] || fireQueued || touchX !== null;
+    if (firing && !cooldown && shots.length < 3) { shots.push({ x: ship.x, y: H - 70 }); cooldown = 14; fireQueued = false; }
+
+    // formation: sweep sideways, step down at the edges
+    let edge = false;
+    for (const b of bugs) { b.x += dir * speed; if (b.x < 30 || b.x > W - 74) edge = true; }
+    if (edge) { dir *= -1; for (const b of bugs) b.y += 18; }
+
+    // bugs throw exceptions from the bottom of a random column
+    if (--bombTimer <= 0 && bugs.length) {
+      const shooter = bugs[Math.floor(Math.random() * bugs.length)];
+      const lowest = bugs.filter(b => Math.abs(b.x - shooter.x) < 10).reduce((a, b) => (b.y > a.y ? b : a));
+      bombs.push({ x: lowest.x + 22, y: lowest.y + 34 });
+      bombTimer = Math.max(18, 70 - wave * 8) + Math.random() * 30;
+    }
+
+    shots = shots.filter(s => (s.y -= 10) > -20);
+    bombs = bombs.filter(b => (b.y += 4 + wave * 0.4) < H + 20);
+
+    for (const s of shots) for (const b of bugs) {
+      if (!s.hit && !b.dead && s.x > b.x && s.x < b.x + 44 && s.y > b.y && s.y < b.y + 32) {
+        s.hit = b.dead = true; score++; burst(b.x + 22, b.y + 16, colors.teal);
+      }
+    }
+    shots = shots.filter(s => !s.hit);
+    bugs = bugs.filter(b => !b.dead);
+
+    for (const b of bombs) {
+      if (!ship.hurt && Math.abs(b.x - ship.x) < 22 && b.y > H - 74 && b.y < H - 44) { b.hit = true; hurt(); }
+    }
+    bombs = bombs.filter(b => !b.hit);
+    if (bugs.some(b => b.y + 32 > H - 80)) { lives = 0; hurt(); }
+
+    if (!bugs.length) { wave++; newWave(); }
+  }
+  function hurt() {
+    burst(ship.x, H - 60, colors.ink);
+    lives = Math.max(0, lives - 1); ship.hurt = 90;
+    if (!lives) {
+      state = "over";
+      if (score > best) { best = score; try { localStorage.setItem("bughunt-best", best); } catch {} }
+    }
+  }
+
+  function draw() {
+    ctx.fillStyle = colors.bg; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = colors.graphite;
+    for (const s of stars) { ctx.globalAlpha = s.s * 0.7; ctx.fillRect(s.x, s.y, 2, 2); }
+    ctx.globalAlpha = 1;
+
+    ctx.font = "15px 'IBM Plex Mono', monospace";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = colors.teal; ctx.textAlign = "left"; ctx.fillText(`wave ${wave + 1}`, 20, 30);
+    ctx.fillStyle = colors.graphite; ctx.textAlign = "right";
+    ctx.fillText(`fixed ${score}   best ${best}   ${"♥ ".repeat(lives).trim()}`, W - 20, 30);
+
+    const legs = Math.floor(frame / 30) % 2;
+    ctx.textAlign = "center"; ctx.font = "12px 'IBM Plex Mono', monospace";
+    for (const b of bugs) {
+      sprite(BUG[legs], b.x, b.y, colors.graphite);
+      ctx.fillStyle = colors.graphite; ctx.fillText(b.name, b.x + 22, b.y + 48);
+    }
+    ctx.fillStyle = colors.teal;
+    for (const s of shots) ctx.fillRect(s.x - 2, s.y - 14, 4, 14);
+    ctx.fillStyle = colors.ink;
+    for (const b of bombs) { ctx.fillRect(b.x - 2, b.y, 4, 4); ctx.fillRect(b.x - 4, b.y + 4, 8, 4); ctx.fillRect(b.x - 2, b.y + 8, 4, 4); }
+    for (const p of sparks) { ctx.globalAlpha = p.life / 30; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 3, 3); }
+    ctx.globalAlpha = 1;
+    if (state === "play" && !(ship.hurt && frame % 10 < 5)) sprite(SHIP, ship.x - 22, H - 70, colors.teal);
+
+    if (state !== "play") {
+      ctx.textAlign = "center";
+      ctx.fillStyle = colors.teal; ctx.font = "700 44px 'Bricolage Grotesque', sans-serif";
+      ctx.fillText(state === "title" ? "Bug hunt" : "Shipped with bugs", W / 2, H / 2 - 10);
+      ctx.fillStyle = colors.graphite; ctx.font = "16px 'IBM Plex Mono', monospace";
+      const line = state === "title" ? "press Space or tap to start" : `you fixed ${score} bugs · Space or tap to try again`;
+      ctx.fillText(line, W / 2, H / 2 + 28);
+    }
+  }
+
+  const loop = () => { update(); draw(); requestAnimationFrame(loop); };
+  loop();
+  canvas.focus({ preventScroll: true });
+})();
+</script>
+</body>
+</html>
