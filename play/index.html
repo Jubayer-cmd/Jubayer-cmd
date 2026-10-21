@@ -203,6 +203,7 @@
     if (state === "play" && !(ship.hurt && frame % 10 < 5)) sprite(SHIP, ship.x - 22, H - 70, colors.teal);
 
     if (state !== "play") {
+      ctx.globalAlpha = 0.88; ctx.fillStyle = colors.bg; ctx.fillRect(0, H / 2 - 70, W, 120); ctx.globalAlpha = 1;
       ctx.textAlign = "center";
       ctx.fillStyle = colors.teal; ctx.font = "700 44px 'Bricolage Grotesque', sans-serif";
       ctx.fillText(state === "title" ? "Bug hunt" : "Shipped with bugs", W / 2, H / 2 - 10);
