@@ -20,13 +20,7 @@ Open to remote Full-Stack and AI Engineer roles.
 
 [LinkedIn](https://www.linkedin.com/in/sheikh-abu-jubayer) · [sheikhabujubayer@gmail.com](mailto:sheikhabujubayer@gmail.com)
 
-### Bug hunt
-
-<a href="https://jubayer-cmd.github.io/Jubayer-cmd/play/">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/bughunt-dark.svg">
-    <img alt="Bug hunt: a boss fight. A ship fires skills (TypeScript, React, Next.js, Node.js, NestJS, Python, FastAPI, PostgreSQL, Redis, Docker, AWS, LangGraph) at the production bug until it is fixed. Click to play." src="assets/bughunt-light.svg" width="100%">
-  </picture>
-</a>
-
-<sub>Every shot is a skill. [Click to play](https://jubayer-cmd.github.io/Jubayer-cmd/play/): arrow keys and Space, or drag on a phone.</sub>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Jubayer-cmd/Jubayer-cmd/output/snake-dark.svg">
+  <img alt="A snake eating my GitHub contribution graph" src="https://raw.githubusercontent.com/Jubayer-cmd/Jubayer-cmd/output/snake.svg" width="100%">
+</picture>
